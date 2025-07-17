@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>T-Rex Crypto</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f9ff; color: #333; }
+    nav { display: flex; justify-content: space-around; background: #007BFF; color: white; padding: 10px 0; }
+    nav button { background: none; border: none; color: white; font-size: 16px; cursor: pointer; }
+    nav button:hover { text-decoration: underline; }
+    section { padding: 20px; display: none; }
+    section.active { display: block; }
+    .coin { display: flex; justify-content: space-between; padding: 10px; background: white; margin-bottom: 10px; border-radius: 10px; box-shadow: 0 1px 5px rgba(0,0,0,0.1); }
+    .btn-buy { background: #28a745; color: white; padding: 5px 10px; border: none; border-radius: 5px; }
+    .btn-sell { background: #dc3545; color: white; padding: 5px 10px; border: none; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <nav>
+    <button onclick="showPage('homePage')">🏠 Home</button>
+    <button onclick="showPage('transaksiPage')">📦 Transaksi</button>
+    <button onclick="showPage('walletPage')">👛 Dompet</button>
+    <button onclick="showPage('profilePage')">👤 Akun</button>
+  </nav>
+
+  <!-- Home Page -->
+  <section id="homePage" class="active">
+    <h2>Harga Crypto</h2>
+    <div id="coinList"></div>
+  </section>
+
+  <!-- Transaksi Page -->
+  <section id="transaksiPage">
+    <h2>Histori Transaksi</h2>
+    <ul id="transList"></ul>
+  </section>
+
+  <!-- Dompet Page -->
+  <section id="walletPage">
+    <h2>Dompet Saya</h2>
+    <ul id="walletList"></ul>
+  </section>
+
+  <!-- Profile Page -->
+  <section id="profilePage">
+    <h2>Profil</h2>
+    <p>Nama: Pengguna Demo</p>
+    <p>Email: demo@trexcrypto.id</p>
+    <button onclick="alert('Logout berhasil!')">Logout</button>
+  </section>
+
+  <script>
+    const coins = [
+      { name: "Bitcoin", code: "BTC", price: 900000000 },
+      { name: "Ethereum", code: "ETH", price: 45000000 },
+      { name: "Solana", code: "SOL", price: 1200000 }
+    ];
+
+    const wallet = {};
+
+    function showPage(id) {
+      document.querySelectorAll('section').forEach(sec => sec.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      if (id === 'transaksiPage') loadHistori();
+      if (id === 'walletPage') loadWallet();
+    }
+
+    function renderCoins() {
+      const container = document.getElementById('coinList');
+      container.innerHTML = '';
+      coins.forEach(coin => {
+        const div = document.createElement('div');
+        div.className = 'coin';
+        div.innerHTML = `
+          <div>
+            <strong>${coin.name} (${coin.code})</strong><br>
+            Rp ${coin.price.toLocaleString()}
+          </div>
+          <div>
+            <button class="btn-buy" onclick="transact('buy','${coin.code}', ${coin.price})">Beli</button>
+            <button class="btn-sell" onclick="transact('sell','${coin.code}', ${coin.price})">Jual</button>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function transact(action, code, price) {
+      const amount = prompt(`Berapa ${code} yang ingin di-${action}?`);
+      if (!amount || isNaN(amount)) return;
+      const total = price * parseFloat(amount);
+      const transaksi = JSON.parse(localStorage.getItem('transaksi') || '[]');
+      transaksi.push({ action, coin: code, amount: parseFloat(amount), total, time: new Date().toLocaleString() });
+      localStorage.setItem('transaksi', JSON.stringify(transaksi));
+      alert(`${action.toUpperCase()} ${amount} ${code} berhasil disimpan.`);
+    }
+
+    function loadHistori() {
+      const data = JSON.parse(localStorage.getItem('transaksi') || '[]');
+      const list = document.getElementById('transList');
+      list.innerHTML = '';
+      data.reverse().forEach(tr => {
+        const li = document.createElement('li');
+        li.textContent = `${tr.action.toUpperCase()} ${tr.amount} ${tr.coin} - Rp ${tr.total.toLocaleString()} (${tr.time})`;
+        list.appendChild(li);
+      });
+    }
+
+    function loadWallet() {
+      const data = JSON.parse(localStorage.getItem('transaksi') || '[]');
+      const dompet = {};
+      data.forEach(tr => {
+        if (!dompet[tr.coin]) dompet[tr.coin] = 0;
+        dompet[tr.coin] += (tr.action === 'buy' ? 1 : -1) * parseFloat(tr.amount);
+      });
+      const list = document.getElementById('walletList');
+      list.innerHTML = '';
+      for (let coin in dompet) {
+        const li = document.createElement('li');
+        li.textContent = `${coin}: ${dompet[coin]} unit`;
+        list.appendChild(li);
+      }
+    }
+
+    // Init
+    renderCoins();
+  </script>
+</body>
+</html>
